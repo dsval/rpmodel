@@ -212,12 +212,12 @@ calc_patm <- function( elv, patm0 = 101325 ){
 #'
 #' @references Farquhar,  G.  D.,  von  Caemmerer,  S.,  and  Berry,  J.  A.:
 #'             A  biochemical  model  of photosynthetic CO2 assimilation in leaves of
-#'             C 3 species, Planta, 149, 78–90, 1980.
+#'             C 3 species, Planta, 149, 78â€“90, 1980.
 #'
 #'             Bernacchi,  C.  J.,  Singsaas,  E.  L.,  Pimentel,  C.,  Portis,  A.
 #'             R.  J.,  and  Long,  S.  P.:Improved temperature response functions
 #'             for models of Rubisco-limited photosyn-thesis, Plant, Cell and
-#'             Environment, 24, 253–259, 2001
+#'             Environment, 24, 253â€“259, 2001
 #'
 #' @return A numeric value for \eqn{K} (in Pa)
 #'
@@ -274,12 +274,12 @@ calc_kmm <- function( tc, patm ) {
 #'
 #' @references Farquhar,  G.  D.,  von  Caemmerer,  S.,  and  Berry,  J.  A.:
 #'             A  biochemical  model  of photosynthetic CO2 assimilation in leaves of
-#'             C 3 species, Planta, 149, 78–90, 1980.
+#'             C 3 species, Planta, 149, 78â€“90, 1980.
 #'
 #'             Bernacchi,  C.  J.,  Singsaas,  E.  L.,  Pimentel,  C.,  Portis,  A.
 #'             R.  J.,  and  Long,  S.  P.:Improved temperature response functions
 #'             for models of Rubisco-limited photosyn-thesis, Plant, Cell and
-#'             Environment, 24, 253–259, 2001
+#'             Environment, 24, 253â€“259, 2001
 #'
 #' @return A numeric value for \eqn{\Gamma*} (in Pa)
 #'
@@ -342,7 +342,7 @@ calc_gammastar <- function( tc, patm ) {
 #' @references  
 #' Bernacchi, C. J., Pimentel, C., and Long, S. P.:  In vivo temperature
 #' 				response func-tions  of  parameters required  to  model  RuBP-limited
-#' 				photosynthesis,  Plant  Cell Environ., 26, 1419–1430, 2003
+#' 				photosynthesis,  Plant  Cell Environ., 26, 1419â€“1430, 2003
 #' Cai, W., and Prentice, I. C.: Recent trends in gross primary production 
 #'        and their drivers: analysis and modelling at flux-site and global scales,
 #'        Environ. Res. Lett. 15 124050 https://doi.org/10.1088/1748-9326/abc64e, 2020
@@ -382,11 +382,11 @@ ftemp_kphio <- function( tc, c4 = FALSE ){
 #' 
 #' @return A numeric value for \eqn{fr}
 #' 
-#' @references  Heskel,  M.,  O’Sullivan,  O.,  Reich,  P.,  Tjoelker,  M.,  Weerasinghe,  L.,  Penillard,  A.,Egerton, J., 
+#' @references  Heskel,  M.,  Oâ€™Sullivan,  O.,  Reich,  P.,  Tjoelker,  M.,  Weerasinghe,  L.,  Penillard,  A.,Egerton, J., 
 #'              Creek, D., Bloomfield, K., Xiang, J., Sinca, F., Stangl, Z., Martinez-De La Torre, A., Griffin, K., 
 #'              Huntingford, C., Hurry, V., Meir, P., Turnbull, M.,and Atkin, O.:  Convergence in the temperature response 
 #'              of leaf respiration across biomes and plant functional types, Proceedings of the National Academy of Sciences,
-#'              113,  3832–3837,  doi:10.1073/pnas.1520282113,2016.
+#'              113,  3832â€“3837,  doi:10.1073/pnas.1520282113,2016.
 #'
 #' @examples 
 #' ## Relative change in Rd going (instantaneously, i.e. not 
@@ -445,7 +445,7 @@ ftemp_inst_rd <- function( tc ){
 #' degrees Celsius (!)
 #'
 #' @references Kattge, J. and Knorr, W.:  Temperature acclimation in a biochemical model of
-#' photosynthesis: a reanalysis of data from 36 species, Plant, Cell and Environment, 30,1176–1190, 2007.
+#' photosynthesis: a reanalysis of data from 36 species, Plant, Cell and Environment, 30,1176â€“1190, 2007.
 #'
 #' @return A numeric value for \eqn{fv}
 #'
@@ -525,7 +525,7 @@ ftemp_inst_vcmax <- function(
 #'
 #' @references Kattge, J. and Knorr, W.:  Temperature acclimation in a 
 #' biochemical model of photosynthesis: a reanalysis of data from 36 species,
-#' Plant, Cell and Environment, 30,1176–1190, 2007.
+#' Plant, Cell and Environment, 30,1176â€“1190, 2007.
 #'
 #' @return A numeric value for \eqn{fv}
 #'
@@ -782,64 +782,89 @@ co2_to_ca <- function(co2, patm){
   return( ca )
 }
 
-optimal_chi <- function(kmm, gammastar, ns_star, ca, vpd, beta, c4){
-  
-  # Input:    - float, 'kmm' : Pa, Michaelis-Menten coeff.
-  #           - float, 'ns_star'  : (unitless) viscosity correction factor for water
-  #           - float, 'vpd' : Pa, vapor pressure deficit
-  # Output:   float, ratio of ci/ca (chi)
-  # Features: Returns an estimate of leaf internal to ambient CO2
-  #           partial pressure following the "simple formulation".
-  # Depends:  - kc
-  #           - ns
-  #           - vpd
-  
-  ## Avoid negative VPD (dew conditions), resolves issue #2 (https://github.com/stineb/rpmodel/issues/2)
-  vpd <- ifelse(vpd < 0, 0, vpd)
-  
-  ## leaf-internal-to-ambient CO2 partial pressure (ci/ca) ratio
-  xi  <- sqrt( (beta * ( kmm + gammastar ) ) / ( 1.6 * ns_star ) )
-  chi <- gammastar / ca + ( 1.0 - gammastar / ca ) * xi / ( xi + sqrt(vpd) )
-  
-  if (c4){
-    
-    out <- list(
-      xi = xi,
-      chi = chi,
-      mc = 1.0,
-      mj = 1.0,
-      mjoc = 1.0
-    )    
-    
-  } else {
-
-    ## alternative variables
-    gamma <- gammastar / ca
-    kappa <- kmm / ca
-    
-    ## use chi for calculating mj
-    mj <- (chi - gamma) / (chi + 2.0 * gamma)
-    
-    ## mc
-    mc <- (chi - gamma) / (chi + kappa)
-    
-    ## mj:mv
-    mjoc <- (chi + kappa) / (chi + 2.0 * gamma)
-    
-    # format output list
-    out <- list(
-      xi = xi,
-      chi = chi,
-      mc = mc,
-      mj = mj,
-      mjoc = mjoc
-    )
-    
-  }
-  
-  return(out)
+optimal_chi <- function(kmm, gammastar, ns_star, ca, vpd, beta, c4,tc,th_star,mGDD0=NA,AI=NA,b25=0.037){
+	
+	# Input:    - float, 'kmm' : Pa, Michaelis-Menten coeff.
+	#           - float, 'ns_star'  : (unitless) viscosity correction factor for water
+	#           - float, 'vpd' : Pa, vapor pressure deficit
+	# Output:   float, ratio of ci/ca (chi)
+	# Features: Returns an estimate of leaf internal to ambient CO2
+	#           partial pressure following the "simple formulation".
+	# Depends:  - kc
+	#           - ns
+	#           - vpd
+	
+	## Avoid negative VPD (dew conditions), resolves issue #2 (https://github.com/stineb/rpmodel/issues/2)
+	vpd <- ifelse(vpd < 0, 0, vpd)
+	
+	## leaf-internal-to-ambient CO2 partial pressure (ci/ca) ratio
+	if(beta=='sdvl'){
+		#if mGDD0 is missing, calculate
+		if(is.na(mGDD0)){
+			mGDD0<-mean(tc[tc>0],na.rm=T)
+		}
+		## theta_star/eta_star
+		th_eta<-th_star/ns_star
+		#bcost
+		bcost_T = b25*(rpmodel::ftemp_inst_vcmax(tc))/(rpmodel::ftemp_inst_rd(tc))
+		#Leaf-specific sapwood respiration [umol/m2/s]
+		Rs<-exp(-2.7818270-0.1302065*mGDD0+0.2129429*tc)
+		##water transport [umol/m2/s]
+		#sw<-exp(7.81248148-0.08402843*AI+2.03792498*th_eta)
+		sw<-exp(4.750723-0.057716*AI+4.425933*th_eta)
+		## acost
+		acost<-Rs/sw
+		b_a <- bcost_T/acost
+		#b_a[b_a>1000]<-NA
+		b_a[is.infinite(b_a)]<-NA
+		b_a[tc<=0]<-NA
+		### calc xi
+		xi  <- sqrt((b_a*(kmm + gammastar))/1.6)
+		
+	}else{
+		xi  <- sqrt( (beta * ( kmm + gammastar ) ) / ( 1.6 * ns_star ) )
+	}
+	
+	chi <- gammastar / ca + ( 1.0 - gammastar / ca ) * xi / ( xi + sqrt(vpd) )
+	
+	if (c4){
+		
+		out <- list(
+			xi = xi,
+			chi = chi,
+			mc = 1.0,
+			mj = 1.0,
+			mjoc = 1.0
+		)    
+		
+	} else {
+		
+		## alternative variables
+		gamma <- gammastar / ca
+		kappa <- kmm / ca
+		
+		## use chi for calculating mj
+		mj <- (chi - gamma) / (chi + 2.0 * gamma)
+		
+		## mc
+		mc <- (chi - gamma) / (chi + kappa)
+		
+		## mj:mv
+		mjoc <- (chi + kappa) / (chi + 2.0 * gamma)
+		
+		# format output list
+		out <- list(
+			xi = xi,
+			chi = chi,
+			mc = mc,
+			mj = mj,
+			mjoc = mjoc
+		)
+		
+	}
+	
+	return(out)
 }
-
 # ## wrap if condition in a function to allow vectorization
 # mj <- function(ns_star, vpd, vacg, vbkg, vdcg, gammastar){
 #
@@ -1048,7 +1073,7 @@ QUADM <- function(A,B,C){
   
 }
 
-#calc_phi0
+#calc_phi0 new
 calc_phi0<-function(tc,mGDD0=NA,AI){
 	# ************************************************************************
 	# Name:     calc_phi0
@@ -1066,13 +1091,16 @@ calc_phi0<-function(tc,mGDD0=NA,AI){
 	###############################################################################################
 	# 01.define the parameters/constants
 	###############################################################################################
-	phi_o_theo <- 0.111       	# theoretical maximum phi0 (Long, 1993;Sandoval et al., in.prep.)
-	m <- 0.4               		# curvature parameter phio max (Sandoval et al., in.prep.)
-	n <- 1.01           			# curvature parameter phio max (Sandoval et al., in.prep.)
+	phi_o_theo <- 0.111293183      	# theoretical maximum phi0 (Long, 1993;Sandoval et al., in.prep.)
+	#m <- 9.533923              		# curvature parameter phio max (Sandoval et al., in.prep.) IN SITU FAPAR!!!!
+	#n <- 0.07455258           	# curvature parameter phio max (Sandoval et al., in.prep.)IN SITU FAPAR!!!!
+	m <- 4.090556               	# curvature parameter phio max (Sandoval et al., in.prep.) OPTIMIZED FLUX DATA KIT !!!!
+	n <- 0.121122       		# curvature parameter phio max (Sandoval et al., in.prep.)OPTIMIZED FLUX DATA KIT !!!!
 	Rgas <- 8.3145            	# ideal gas constant J/mol/K
-	dS0 = 1540				# max entropy change(Sandoval et al., in.prep.)
-	dS_mgdd = 0.43370 			# rate entropy change with temperature phio max (Sandoval et al., in.prep.)
-	Ha <- 62600	      		# activation energy J/mol (Sandoval et al., in.prep.)
+	dS0 = 3468.185			# max entropy change(Sandoval et al., in.prep.)
+	dS_mgdd = 0.6680158			# rate entropy change with temperature phio max (Sandoval et al., in.prep.)
+	Ha <- 70885.39	      		# activation energy J/mol (Sandoval et al., in.prep.)
+  
 	#if mGDD0 is missing, calculate
 	if(is.na(mGDD0)){
 		mGDD0<-mean(tc[tc>0],na.rm=T)
@@ -1083,8 +1111,8 @@ calc_phi0<-function(tc,mGDD0=NA,AI){
 	##power law from flux data kit
 	DeltaS = dS0*mGDD0^(-dS_mgdd)
 	##calc deaactivation energy J/mol (Sandoval et al., in.prep.)
-	Hd<- 294.804 *DeltaS
-		
+	Hd<- 295 *DeltaS
+	
 	###############################################################################################
 	# 02.define the functions
 	###############################################################################################
@@ -1092,16 +1120,15 @@ calc_phi0<-function(tc,mGDD0=NA,AI){
 	no_acc_f_arr<-function (tcleaf,Ha =71513,Hd= 2e+05,dent=649) {
 		
 		###10.1111/nph.16883
-		
+		Rgas <- 8.3145 #J/mol/K
 		##fix for optimization
 		if(!is.na(Ha)& !is.na(Hd)& Ha>Hd){
-			Hd=Ha+100
+			Ha<-Hd-1
 		}
-		
 		Top<-Hd/(dent-Rgas*log(Ha/(Hd-Ha)))
 		tkleaf <- tcleaf + 273.15
-		
-		f1=(tkleaf/Top) * exp((Ha*(tkleaf-Top))/(Top*Rgas*tkleaf)) 
+		###################change to Medlyn et al. (2002)
+		f1= exp((Ha*(tkleaf-Top))/(Top*Rgas*tkleaf)) 
 		f2=1+exp((Top*dent-Hd)/(Top*Rgas))
 		f3=1+exp((tkleaf*dent-Hd)/(tkleaf*Rgas))
 		
@@ -1123,4 +1150,52 @@ calc_phi0<-function(tc,mGDD0=NA,AI){
 	phi0 = phi_o_peak*phi0_fT
 	return(phi0)
 	
+}
+
+calc_b_a<-function(tc,th_star,mGDD0=NA,AI,elev,b25=0.037){
+	# ************************************************************************
+	# Name:     calc_b_a
+	# Inputs:   - double - vector (tc), air temperature, degrees C
+	#           - double - vector (th_star), fraction of the WHC as (θ – θwp) / (θfc – θwp)
+	#           - double - scalar (mGDD0), mean temperature during growing degree days with tc>0 
+	#           - double - scalar (AI), climatological aridity index, defined as PET/P
+	#           - double - scalar (b25), ratio of leaf Rd25/Vcmax25 as in Wang, H., et al. (2020, GCB) 
+	# Returns:  double, combined costs b/a from the least cost hypothesis, mol /mol 
+	# Features: This function calculates the temperature and soil moisture dependence of the
+	#          combined costs b/a
+	# * Ref:    Sandoval, Flo, and Prentice
+	#		    The carbon cost of sustaining transpiration 
+	#             in prep.;
+	#             doi:
+	# ************************************************************************
+	###############################################################################################
+	# 01.define the parameters/constants
+	# ###############################################################################################
+	
+	#if mGDD0 is missing, calculate
+	if(is.na(mGDD0)){
+		mGDD0<-mean(tc[tc>0],na.rm=T)
+	}
+	###errrors when using EF as proxy for theta star with LE_CORR
+	th_star[th_star<0]<-0
+	th_star[th_star>1]<-1
+	# relative viscosity:
+	eta_star<-rpmodel::viscosity_h2o(tc,rpmodel::calc_patm(elev))/rpmodel::viscosity_h2o(25,101325)
+	## theta_star/eta_star
+	th_eta<-th_star/eta_star
+	#bcost
+	bcost_T = b25*(rpmodel::ftemp_inst_vcmax(tc))/(rpmodel::ftemp_inst_rd(tc))
+	#Leaf-specific sapwood respiration [umol/m2/s]
+	Rs<-exp(-2.7818270-0.1302065*mGDD0+0.2129429*tc)
+	##water transport [umol/m2/s]
+	#sw<-exp(7.81248148-0.08402843*AI+2.03792498*th_eta)
+	sw<-exp(4.750723-0.057716*AI+4.425933*th_eta)
+	## acost
+	acost<-Rs/sw
+	b_a <- bcost_T/acost
+	#b_a[b_a>1000]<-NA
+	b_a[is.infinite(b_a)]<-NA
+	b_a[tc<=0]<-NA
+	#return(b_a)
+	return(cbind(a_cost=acost,b_a=b_a))
 }

@@ -197,30 +197,30 @@
 #'
 #' @references  
 #'  Bernacchi, C. J., Pimentel, C., and Long, S. P.:  In vivo temperature response func-tions  of  parameters
-#'  required  to  model  RuBP-limited  photosynthesis,  Plant  Cell Environ., 26, 1419–1430, 2003
+#'  required  to  model  RuBP-limited  photosynthesis,  Plant  Cell Environ., 26, 1419â€“1430, 2003
 #'
 #   Cai, W., and Prentice, I. C.: Recent trends in gross primary production 
 #'  and their drivers: analysis and modelling at flux-site and global scales,
 #'  Environ. Res. Lett. 15 124050 https://doi.org/10.1088/1748-9326/abc64e, 2020
 #
-#'  Heskel,  M.,  O’Sullivan,  O.,  Reich,  P.,  Tjoelker,  M.,  Weerasinghe,  L.,  Penillard,  A.,Egerton, J.,
+#'  Heskel,  M.,  Oâ€™Sullivan,  O.,  Reich,  P.,  Tjoelker,  M.,  Weerasinghe,  L.,  Penillard,  A.,Egerton, J.,
 #'  Creek, D., Bloomfield, K., Xiang, J., Sinca, F., Stangl, Z., Martinez-De La Torre, A., Griffin, K.,
 #'  Huntingford, C., Hurry, V., Meir, P., Turnbull, M.,and Atkin, O.:  Convergence in the temperature response
 #'  of leaf respiration across biomes and plant functional types, Proceedings of the National Academy of Sciences,
-#'  113,  3832–3837,  doi:10.1073/pnas.1520282113,2016.
+#'  113,  3832â€“3837,  doi:10.1073/pnas.1520282113,2016.
 #'
 #'  Huber,  M.  L.,  Perkins,  R.  A.,  Laesecke,  A.,  Friend,  D.  G.,  Sengers,  J.  V.,  Assael,M. J.,
 #'  Metaxa, I. N., Vogel, E., Mares, R., and Miyagawa, K.:  New international formulation for the viscosity
-#'  of H2O, Journal of Physical and Chemical ReferenceData, 38, 101–125, 2009
+#'  of H2O, Journal of Physical and Chemical ReferenceData, 38, 101â€“125, 2009
 #'
 #'  Prentice,  I. C.,  Dong,  N.,  Gleason,  S. M.,  Maire,  V.,  and Wright,  I. J.:  Balancing the costs
 #'  of carbon gain and water transport:  testing a new theoretical frameworkfor  plant  functional  ecology,
-#'  Ecology  Letters,  17,  82–91,  10.1111/ele.12211,http://dx.doi.org/10.1111/ele.12211, 2014.
+#'  Ecology  Letters,  17,  82â€“91,  10.1111/ele.12211,http://dx.doi.org/10.1111/ele.12211, 2014.
 #'
 #'  Wang, H., Prentice, I. C., Keenan, T. F., Davis, T. W., Wright, I. J., Cornwell, W. K.,Evans, B. J.,
-#'  and Peng, C.:  Towards a universal model for carbon dioxide uptake by plants, Nat Plants, 3, 734–741, 2017.
+#'  and Peng, C.:  Towards a universal model for carbon dioxide uptake by plants, Nat Plants, 3, 734â€“741, 2017.
 #'  Atkin, O. K., et al.:  Global variability in leaf respiration in relation to climate, plant func-tional
-#'  types and leaf traits, New Phytologist, 206, 614–636, doi:10.1111/nph.13253,
+#'  types and leaf traits, New Phytologist, 206, 614â€“636, doi:10.1111/nph.13253,
 #'  https://nph.onlinelibrary.wiley.com/doi/abs/10.1111/nph.13253.
 #'
 #'  Smith, N. G., Keenan, T. F., Colin Prentice, I. , Wang, H. , Wright, I. J., Niinemets, U. , Crous, K. Y.,
@@ -251,18 +251,13 @@ rpmodel <- function(
   ppfd,
   patm = NA,
   elv = NA,
-  kphio = ifelse(c4, 1.0,
-                 ifelse(do_ftemp_kphio,
-                        ifelse(do_soilmstress,
-                               0.087182,
-                               0.081785),
-                        0.049977)),
   beta = ifelse(c4, 146/9, 146),
   soilm = stopifnot(!do_soilmstress),
   meanalpha = 1.0,
   apar_soilm = 0.0,
   bpar_soilm = 0.73300,
   c4 = FALSE,
+  AI = 1.0,
   method_jmaxlim = "wang17",
   do_ftemp_kphio = TRUE,
   do_soilmstress = FALSE,
@@ -297,17 +292,41 @@ rpmodel <- function(
   #---- Temperature dependence of quantum yield efficiency----------------------
   ## 'do_ftemp_kphio' is not actually a stress function, but is the temperature-dependency of
   ## the quantum yield efficiency after Bernacchi et al., 2003 PCE
-  if (length(do_ftemp_kphio) > 1){
-    warning("Argument 'do_ftemp_kphio' has length > 1. Only the first element is used.")
-    do_ftemp_kphio <- do_ftemp_kphio[1]
-  }
-  if (do_ftemp_kphio) {
-    kphio <- ftemp_kphio( tc, c4 ) * kphio
-  } else {
-    if (c4){
-      kphio <- ftemp_kphio( 15.0, c4 ) * kphio
-    }
-  }
+  ################################################################################################
+	
+	if(do_ftemp_kphio == 'sdvl'){
+		
+		kphio <- calc_phi0(tc=tc,AI=AI)
+	
+	} else if (do_ftemp_kphio == 'brnc'){
+		# kphio = ifelse(c4, 1.0,
+		# 	ifelse(do_ftemp_kphio,
+		# 		ifelse(do_soilmstress,
+		# 			0.087182,
+		# 			0.081785),
+		# 		0.049977))
+		kphio <- ftemp_kphio( tc, c4 ) * 0.087182
+	
+	}else if (c4){
+		kphio <- ftemp_kphio( 15.0, c4 ) * 0.087182
+	}
+  
+  
+  
+  
+  
+ ################################################################################################
+  # if (length(do_ftemp_kphio) > 1){
+  #   warning("Argument 'do_ftemp_kphio' has length > 1. Only the first element is used.")
+  #   do_ftemp_kphio <- do_ftemp_kphio[1]
+  # }
+  # if (do_ftemp_kphio) {
+  #   kphio <- ftemp_kphio( tc, c4 ) * kphio
+  # } else {
+  #   if (c4){
+  #     kphio <- ftemp_kphio( 15.0, c4 ) * kphio
+  #   }
+  # }
 
   #---- soil moisture stress as a function of soil moisture and mean alpha -----
   if (do_soilmstress) {
@@ -338,7 +357,7 @@ rpmodel <- function(
 
   ##----Optimal ci -------------------------------------------------------------
   ## The heart of the P-model: calculate ci:ca ratio (chi) and additional terms
-  out_optchi <- optimal_chi( kmm, gammastar, ns_star, ca, vpd, beta, c4 )
+	out_optchi <- optimal_chi( kmm, gammastar, ns_star, ca, vpd, beta, c4,tc=tc,th_star=soilm,AI=AI )
   
   ## leaf-internal CO2 partial pressure (Pa)
   ci <- out_optchi$chi * ca

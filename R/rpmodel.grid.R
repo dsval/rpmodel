@@ -9,7 +9,7 @@
 #' rpmodel.grid()	
 
 rpmodel.grid<-function(tc, vpd, co2, fapar, ppfd, soilm,meanalpha,elev = NA,AI=NA ,
-	beta = 146.0,	do_ftemp_kphio = TRUE, do_soilmstress = TRUE,inmem=FALSE,outdir=getwd()){
+	beta = 146.0,	do_ftemp_kphio = 'sdvl', do_soilmstress = TRUE,inmem=FALSE,outdir=getwd()){
 	
 	###########################################################################
 	# 00. Check if parallel computation is required by the user and if the dimensions of the raster objects match
@@ -30,7 +30,7 @@ rpmodel.grid<-function(tc, vpd, co2, fapar, ppfd, soilm,meanalpha,elev = NA,AI=N
 	ny <- nlayers(tc)
 	################ arrays for well watered
 	if (!do_soilmstress){
-		soilm=calc(tc,fun= function(x){x/x})
+		#soilm=calc(tc,fun= function(x){x/x})
 		meanalpha = soilm[[1]]
 		#soilm=reclassify(tc, cbind(-Inf,+Inf , 1), right=NA);gc()
 	}
@@ -109,9 +109,14 @@ rpmodel.grid<-function(tc, vpd, co2, fapar, ppfd, soilm,meanalpha,elev = NA,AI=N
 		}
 		
 		# apply vectorized rpmodel		
-		if(do_ftemp_kphio){
-			kphiorow  =mapply(calc_phi0,tc=tcrow,AI=AIrow,SIMPLIFY = FALSE) 
-		}
+# 		if(do_ftemp_kphio == 'sdvl'){
+# 			kphiorow  =mapply(calc_phi0,tc=tcrow,AI=AIrow,SIMPLIFY = FALSE) 
+# 			pt_do_temp = FALSE
+# 		} else if (do_ftemp_kphio == 'brnc'){
+# 			kphiorow =  0.087182
+# 			pt_do_temp = TRUE
+# 
+# 		}
 						
 										
 														
@@ -121,12 +126,16 @@ rpmodel.grid<-function(tc, vpd, co2, fapar, ppfd, soilm,meanalpha,elev = NA,AI=N
 			vpd            = vpdrow,         # Pa,
 			co2            = co2row,          # ppm,
 			elv            = elevrow,        # m.a.s.l.,
-			kphio          = kphiorow,         # quantum yield efficiency,
-			beta           = 146,         # unit cost ratio a/b,
 			fapar          = faparrow,      # fraction  ,
 			ppfd           = ppfdrow,      # mol/m2/d month?,
 			soilm = soilmrow,
-			meanalpha=alpharow, MoreArgs = list(do_ftemp_kphio = FALSE,do_soilmstress = do_soilmstress),SIMPLIFY = FALSE)
+			meanalpha=alpharow, 
+			AI=AIrow,
+			MoreArgs = 
+			list(beta = beta,
+			do_ftemp_kphio = do_ftemp_kphio,
+			do_soilmstress = do_soilmstress),
+			SIMPLIFY = FALSE)
 		# calc transpiration and wue
 		result<-lapply(result,as.data.frame)
 		result<-mapply(calc_transp,result,vpdrow,tcrow,ppfdrow,elevrow, SIMPLIFY = FALSE)
