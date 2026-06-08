@@ -805,13 +805,15 @@ optimal_chi <- function(kmm, gammastar, ns_star, ca, vpd, beta, c4,tc,th_star,mG
 		}
 		## theta_star/eta_star
 		th_eta<-th_star/ns_star
-		#bcost
-		bcost_T = b25*(rpmodel::ftemp_inst_vcmax(tc))/(rpmodel::ftemp_inst_rd(tc))
-		#Leaf-specific sapwood respiration [umol/m2/s]
-		Rs<-exp(-2.7818270-0.1302065*mGDD0+0.2129429*tc)
-		##water transport [umol/m2/s]
-		#sw<-exp(7.81248148-0.08402843*AI+2.03792498*th_eta)
-		sw<-exp(4.750723-0.057716*AI+4.425933*th_eta)
+    ##calc bcost
+		bcost_T = b25*(ftemp_inst_rd(tc))/(ftemp_inst_vcmax(tcleaf = tc))
+	  #Leaf-specific sapwood respiration [umol/m2/s]
+	  #Rs<-exp(-2.7818270-0.1302065*mGDD0+0.2129429*tc)#v1
+    Rs<-exp(-2.65717-0.17308*mGDD0+0.326891*tc)#v5
+	  ##water transport [umol/m2/s]
+	  #sw<-exp(7.81248148-0.08402843*AI+2.03792498*th_eta)
+	  #sw<-exp(4.750723-0.057716*AI+4.425933*th_eta)#v1
+    sw<-exp(4.06445-0.20880*AI+5.79732*th_eta)#v5
 		## acost
 		acost<-Rs/sw
 		b_a <- bcost_T/acost
@@ -1184,18 +1186,21 @@ calc_b_a<-function(tc,th_star,mGDD0=NA,AI,elev,b25=0.037){
 	## theta_star/eta_star
 	th_eta<-th_star/eta_star
 	#bcost
-	bcost_T = b25*(rpmodel::ftemp_inst_vcmax(tc))/(rpmodel::ftemp_inst_rd(tc))
+  bcost_T = b25*(rpmodel::ftemp_inst_rd(tc))/(rpmodel::ftemp_inst_vcmax(tcleaf = tc))
 	#Leaf-specific sapwood respiration [umol/m2/s]
-	Rs<-exp(-2.7818270-0.1302065*mGDD0+0.2129429*tc)
+	#Rs<-exp(-2.7818270-0.1302065*mGDD0+0.2129429*tc)#v1
+  Rs<-exp(-2.65717-0.17308*mGDD0+0.326891*tc)#v5
 	##water transport [umol/m2/s]
 	#sw<-exp(7.81248148-0.08402843*AI+2.03792498*th_eta)
-	sw<-exp(4.750723-0.057716*AI+4.425933*th_eta)
+	#sw<-exp(4.750723-0.057716*AI+4.425933*th_eta)#v1
+  sw<-exp(4.06445-0.20880*AI+5.79732*th_eta)#v5
 	## acost
 	acost<-Rs/sw
 	b_a <- bcost_T/acost
 	#b_a[b_a>1000]<-NA
 	b_a[is.infinite(b_a)]<-NA
 	b_a[tc<=0]<-NA
-	#return(b_a)
-	return(cbind(a_cost=acost,b_a=b_a))
+	
+	#return(cbind(a_cost=acost,b_a=b_a))
+  return(b_a)
 }

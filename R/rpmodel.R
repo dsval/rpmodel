@@ -307,6 +307,8 @@ rpmodel <- function(
 		# 		0.049977))
 		kphio <- ftemp_kphio( tc, c4 ) * 0.087182
 	
+	}else if (do_ftemp_kphio == FALSE){
+		kphio<-0.087182
 	}else if (c4){
 		kphio <- ftemp_kphio( 15.0, c4 ) * 0.087182
 	}
