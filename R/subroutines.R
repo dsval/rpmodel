@@ -458,11 +458,11 @@ ftemp_inst_rd <- function( tc ){
 
 ftemp_inst_vcmax <- function(
   tcleaf,
-  tcgrowth = tcleaf,
+  tcgrowth = NULL,
   tcref = 25.0
 ){
   
-  # loal parameters
+  # local parameters
   Ha    <- 71513  # activation energy (J/mol)
   Hd    <- 200000 # deactivation energy (J/mol)
   Rgas  <- 8.3145 # universal gas constant (J/mol/K)
@@ -475,7 +475,17 @@ ftemp_inst_vcmax <- function(
   tkleaf <- tcleaf + 273.15
   
   # calculate entropy following Kattge & Knorr (2007), negative slope and y-axis intersect is when expressed as a function of temperature in degrees Celsius, not Kelvin !!!
-  dent <- a_ent - b_ent * tcgrowth   # 'tcgrowth' corresponds to 'tmean' in Nicks, 'tc25' is 'to' in Nick's
+  
+  if(!is.null(tcgrowth)){
+    dent <- a_ent - b_ent * tcgrowth   # 'tcgrowth' corresponds to 'tmean' in Nicks, 'tc25' is 'to' in Nick's
+  }else{
+    #coefficients for non-acclimated conditions from Kattge & Knorr
+    Ha    <- 72000  # activation energy (J/mol)
+    dent  <- 649    # entropy change (J/mol/K)
+  }
+
+
+
   fva <- ftemp_arrh( tkleaf, Ha, tkref = tkref )
   fvb <- (1 + exp( (tkref * dent - Hd)/(Rgas * tkref) ) ) / (1 + exp( (tkleaf * dent - Hd)/(Rgas * tkleaf) ) )
   fv  <- fva * fvb
@@ -809,17 +819,27 @@ optimal_chi <- function(kmm, gammastar, ns_star, ca, vpd, beta, c4,tc,th_star,mG
 		bcost_T = b25*(ftemp_inst_rd(tc))/(ftemp_inst_vcmax(tcleaf = tc))
 	  #Leaf-specific sapwood respiration [umol/m2/s]
 	  #Rs<-exp(-2.7818270-0.1302065*mGDD0+0.2129429*tc)#v1
-    Rs<-exp(-2.65717-0.17308*mGDD0+0.326891*tc)#v5
+    #Rs<-exp(-2.65717-0.17308*mGDD0+0.326891*tc)#v5
+	  #Rs<-exp(-3.36694-0.09464*mGDD0+0.323600*tc)#v6
+    #Rs<-exp(-4.20252-0.08993*mGDD0+0.332382*tc)#v8
+    Rs<-exp(-2.590629-0.099145*mGDD0+0.080330*tc)#v10
+           
 	  ##water transport [umol/m2/s]
 	  #sw<-exp(7.81248148-0.08402843*AI+2.03792498*th_eta)
 	  #sw<-exp(4.750723-0.057716*AI+4.425933*th_eta)#v1
-    sw<-exp(4.06445-0.20880*AI+5.79732*th_eta)#v5
-		## acost
+    #sw<-exp(4.06445-0.20880*AI+5.79732*th_eta)#v5
+	  #sw<-exp((8.49651-0.26573*AI)*(th_eta/(0.0795489+th_eta)))#v6
+    #sw<-exp(4.58672-0.18348*AI+4.9158*th_eta)#v8
+    #sw<-exp(4.00605958-0.01013650*AI+2.50538896*th_eta)#v9 
+    sw<-exp(3.990299-0.005180*AI+2.003196*th_eta)#v10
+    
+		## calc acost
 		acost<-Rs/sw
 		b_a <- bcost_T/acost
-		#b_a[b_a>1000]<-NA
+		#numerical stability, it blows up at extreme cold and wet
+    #b_a[b_a<7]<-7
 		b_a[is.infinite(b_a)]<-NA
-		b_a[tc<=0]<-NA
+		
 		### calc xi
 		xi  <- sqrt((b_a*(kmm + gammastar))/1.6)
 		
@@ -884,15 +904,16 @@ lue_vcmax_wang17 <- function(out_optchi, kphio, c_molmass, soilmstress){
   len <- length(out_optchi[[1]])
 
   kc <- 0.41   # Jmax cost coefficient
-
+  
   # ## Following eq. 17 in Stocker et al., 2020 GMD
   # tmp <- 1.0 - (kc / out_optchi$mj)^(2.0/3.0)
   # mprime <- ifelse(tmp > 0, out_optchi$mj * sqrt(tmp), NA)  # avoid square root of negative number
 
   ## original code - is equivalent to eq. 17-based formulation above
   tmp <- out_optchi$mj^2 - kc^(2.0/3.0) * (out_optchi$mj^(4.0/3.0))
-  mprime <- ifelse(tmp > 0, sqrt(tmp), NA)  # avoid square root of negative number
-  
+  tmp <- ifelse(tmp <= 0, 0.00001, tmp)  # avoid square root of negative number
+  #mprime <- ifelse(tmp > 0, sqrt(tmp), NA)  # avoid square root of negative number
+  mprime <-sqrt(tmp)
   out <- list(
     
     mprime = mprime,
@@ -1186,20 +1207,23 @@ calc_b_a<-function(tc,th_star,mGDD0=NA,AI,elev,b25=0.037){
 	## theta_star/eta_star
 	th_eta<-th_star/eta_star
 	#bcost
-  bcost_T = b25*(rpmodel::ftemp_inst_rd(tc))/(rpmodel::ftemp_inst_vcmax(tcleaf = tc))
+  bcost_T = b25*(ftemp_inst_rd(tc))/(ftemp_inst_vcmax(tcleaf = tc))
 	#Leaf-specific sapwood respiration [umol/m2/s]
 	#Rs<-exp(-2.7818270-0.1302065*mGDD0+0.2129429*tc)#v1
-  Rs<-exp(-2.65717-0.17308*mGDD0+0.326891*tc)#v5
-	##water transport [umol/m2/s]
-	#sw<-exp(7.81248148-0.08402843*AI+2.03792498*th_eta)
-	#sw<-exp(4.750723-0.057716*AI+4.425933*th_eta)#v1
-  sw<-exp(4.06445-0.20880*AI+5.79732*th_eta)#v5
+  #Rs<-exp(-2.65717-0.17308*mGDD0+0.326891*tc)#v5
+	  #Rs<-exp(-3.36694-0.09464*mGDD0+0.323600*tc)#v6
+    Rs<-exp(-2.56756147-0.09828859*mGDD0+0.10119698*tc)#v9
+	  ##water transport [umol/m2/s]
+	  #sw<-exp(7.81248148-0.08402843*AI+2.03792498*th_eta)
+	  #sw<-exp(4.750723-0.057716*AI+4.425933*th_eta)#v1
+    #sw<-exp(4.06445-0.20880*AI+5.79732*th_eta)#v5
+	  #sw<-exp((8.49651-0.26573*AI)*(th_eta/(0.0795489+th_eta)))#v6
+    sw<-exp(4.00605958-0.01013650*AI+2.50538896*th_eta)#v9
 	## acost
 	acost<-Rs/sw
 	b_a <- bcost_T/acost
 	#b_a[b_a>1000]<-NA
 	b_a[is.infinite(b_a)]<-NA
-	b_a[tc<=0]<-NA
 	
 	#return(cbind(a_cost=acost,b_a=b_a))
   return(b_a)
