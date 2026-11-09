@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "Please cite this modified software using the following information."
+title: "Experimental Pmodel with extended LCH"
+version: 1.3.0
+date-released: 2026-11-09
+
+authors:
+  - family-names: "Sandoval"
+    given-names: "David"
+    affiliation: "Imperial College London"
+    orcid: "https://orcid.org/0000-0002-4404-6452"
+
+  - family-names: "Stocker"
+    given-names: "Benjamin"
+
+  - family-names: "Hufkens"
+    given-names: "Koen"
+
+  - family-names: "Orme"
+    given-names: "David"
+
+abstract: >
+  Modified and extended version of the original rpmodel package.
+  This version includes additional functionality and modifications.
+
+repository-code: "https://github.com/dsval/rpmodel"
